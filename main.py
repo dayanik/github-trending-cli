@@ -5,7 +5,6 @@ from datetime import date, timedelta
 from pydantic import BaseModel
 from rich.console import Console
 from rich.table import Table
-from rich.text import Text
 
 
 console = Console()
@@ -32,15 +31,26 @@ def get_repos(language: str, created: date, limit: int) -> list[Repo]:
         "order": "desc",
         "per_page": min(limit, 30)
     }
+    try:
+        response = requests.get(
+            url=url, 
+            params=params, 
+            headers=headers, 
+            timeout=10
+        )
+        response.raise_for_status()
+        return Response.model_validate(response.json()).items
+    except requests.exceptions.HTTPError as e:
+        print("HTTP ошибка:", e)
+    except requests.exceptions.ConnectionError:
+        print("Ошибка соединения")
+    except requests.exceptions.Timeout:
+        print("Таймаут запроса")
+    except requests.exceptions.RequestException as e:
+        print("Другая ошибка запроса", e)
 
-    response = requests.get(url=url, params=params, headers=headers)
-    response.raise_for_status()
-    print(response.json())
-    return Response.model_validate(response.json()).items
-    
 
-
-def positive_int(value: str) -> int:
+def _positive_int(value: str) -> int:
     ivalue = int(value)
     if ivalue <= 0:
         raise argparse.ArgumentTypeError(
@@ -67,7 +77,7 @@ def get_args(parser: argparse.ArgumentParser):
     )
     parser.add_argument(
         "--limit",
-        type=positive_int,
+        type=_positive_int,
         help='count of repos to print',
         default=10
     )
@@ -114,6 +124,7 @@ def render_repos(repos: list[Repo]) -> None:
         )
 
     console.print(table)
+
 
 def main():
     parser = argparse.ArgumentParser(prog="trend-repos")

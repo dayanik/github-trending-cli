@@ -95,8 +95,9 @@ uv venv
 
 ## 📋 Requirements
 
-- 🐍 Python 3.13+
-- 🔗 requests >= 2.32.4
+- Python 3.13+
+- requests >= 2.32.4
+- rich>=14.3.2 -- python cli output modul
 
 ---
 
